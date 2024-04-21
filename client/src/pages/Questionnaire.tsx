@@ -1,31 +1,37 @@
 import React, { useEffect, useState } from "react";
 import QuestionCard from "../components/Question";
 import * as apiClient from "../apiClient";
+import Loader from "../components/Loader";
 
 const QuizPage: React.FC = () => {
   const [quizData, setQuizData] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch major from localStorage
-    const storedPersonalInfo = localStorage.getItem("personalInfo");
-    if (storedPersonalInfo) {
-      const { major, subMajor } = JSON.parse(storedPersonalInfo);
-      const f = major + "," + subMajor;
+    const fetchQuizData = async () => {
+      try {
+        const storedPersonalInfo = localStorage.getItem("personalInfo");
+        if (storedPersonalInfo) {
+          const { major, subMajor } = JSON.parse(storedPersonalInfo);
+          const d = major + "," + subMajor;
 
-      // Fetch quiz data based on major and subMajor
-      apiClient
-        .createQuestionnaire(f as string)
-        .then((res) => res.json())
-        .then((data) => {
-          setQuizData(data); // Set quiz data once fetched
-        })
-        .catch((error) => {
-          console.error("Error fetching quiz data:", error);
-        });
-    }
-  }, []); // Empty dependency array ensures this effect runs only once on mount
+          const response = await apiClient.createQuestionnaire(d);
+
+          setQuizData(response.message.content);
+          console.log(quizData);
+          
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching quiz data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchQuizData();
+  }, []);
 
   const handleAnswerSelected = (
     chosenAnswer: string,
@@ -35,12 +41,11 @@ const QuizPage: React.FC = () => {
       setCorrectCount((prevCount) => prevCount + 1);
     }
 
-    // Move to the next question or show results if all questions have been answered
     const nextQuestionIndex = currentQuestionIndex + 1;
     if (nextQuestionIndex < (quizData?.quiz?.questions?.length || 0)) {
       setCurrentQuestionIndex(nextQuestionIndex);
     } else {
-      // All questions answered, do nothing or perform cleanup if needed
+      setCurrentQuestionIndex(-1); // Quiz completed
     }
   };
 
@@ -60,17 +65,17 @@ const QuizPage: React.FC = () => {
           />
         </div>
 
-        {quizData && currentQuestionIndex !== -1 ? (
-          // Render next question if quiz is not completed
+        {loading ? (
+          <Loader />
+        ) : quizData && currentQuestionIndex !== -1 ? (
           <QuestionCard
-            key={quizData.quiz.questions[currentQuestionIndex].id}
-            question={quizData.quiz.questions[currentQuestionIndex].question}
-            options={quizData.quiz.questions[currentQuestionIndex].options}
-            answer={quizData.quiz.questions[currentQuestionIndex].answer}
+            key={currentQuestionIndex}
+            question={quizData.quiz.questions[currentQuestionIndex]?.question}
+            options={quizData.quiz.questions[currentQuestionIndex]?.options}
+            answer={quizData.quiz.questions[currentQuestionIndex]?.answer}
             onOptionSelected={handleAnswerSelected}
           />
         ) : (
-          // Show quiz results if quiz is completed
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-4">Quiz Completed!</h2>
             <p>Total Correct Answers: {correctCount}</p>
