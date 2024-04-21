@@ -1,120 +1,66 @@
-import React, { useState } from 'react';
-import QuestionCard from '../components/Question';
+import React, { useEffect, useState } from "react";
+import QuestionCard from "../components/Question";
+import * as apiClient from "../apiClient";
 
 const QuizPage: React.FC = () => {
-  const quizData = {
-    quiz: {
-      questions: [
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        {
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },{
-          id: 1,
-          question: "What is software engineering?",
-          options: [
-            "A. Developing hardware components",
-            "B. Designing user interfaces",
-            "C. Applying engineering principles to software development",
-            "D. None of the above"
-          ],
-          answer: "C. Applying engineering principles to software development"
-        },
-        // Add more questions...
-      ]
-    }
-  };
-
+  const [quizData, setQuizData] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
 
-  const handleAnswerSelected = (chosenAnswer: string, correctAnswer: string) => {
+  useEffect(() => {
+    // Fetch major from localStorage
+    const storedPersonalInfo = localStorage.getItem("personalInfo");
+    if (storedPersonalInfo) {
+      const { major, subMajor } = JSON.parse(storedPersonalInfo);
+      const f = major + "," + subMajor;
+
+      // Fetch quiz data based on major and subMajor
+      apiClient
+        .createQuestionnaire(f as string)
+        .then((res) => res.json())
+        .then((data) => {
+          setQuizData(data); // Set quiz data once fetched
+        })
+        .catch((error) => {
+          console.error("Error fetching quiz data:", error);
+        });
+    }
+  }, []); // Empty dependency array ensures this effect runs only once on mount
+
+  const handleAnswerSelected = (
+    chosenAnswer: string,
+    correctAnswer: string
+  ) => {
     if (chosenAnswer === correctAnswer) {
       setCorrectCount((prevCount) => prevCount + 1);
     }
 
     // Move to the next question or show results if all questions have been answered
     const nextQuestionIndex = currentQuestionIndex + 1;
-    if (nextQuestionIndex < quizData.quiz.questions.length) {
+    if (nextQuestionIndex < (quizData?.quiz?.questions?.length || 0)) {
       setCurrentQuestionIndex(nextQuestionIndex);
     } else {
-      // All questions answered, show quiz results
-      setCurrentQuestionIndex(-1); // Set to -1 to indicate quiz completion
+      // All questions answered, do nothing or perform cleanup if needed
     }
   };
 
-  const totalQuestions = quizData.quiz.questions.length;
-  const progressPercentage = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const totalQuestions = quizData?.quiz?.questions?.length || 0;
+  const progressPercentage =
+    totalQuestions > 0
+      ? ((currentQuestionIndex + 1) / totalQuestions) * 100
+      : 0;
 
   return (
     <div className="container mx-auto mt-8">
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="mb-4">
-          <div className="bg-blue-500 h-4 rounded-full" style={{ width: `${progressPercentage}%` }} />
+          <div
+            className="bg-blue-500 h-4 rounded-full"
+            style={{ width: `${progressPercentage}%` }}
+          />
         </div>
 
-        {currentQuestionIndex !== -1 ? (
+        {quizData && currentQuestionIndex !== -1 ? (
           // Render next question if quiz is not completed
           <QuestionCard
             key={quizData.quiz.questions[currentQuestionIndex].id}
