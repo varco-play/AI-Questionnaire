@@ -19,10 +19,12 @@ const QuizPage: React.FC = () => {
 
           const response = await apiClient.createQuestionnaire(d);
 
-          setQuizData(response.message.content);
-          console.log(quizData);
-          
-          setLoading(false);
+          if (response && response.quiz && response.quiz.questions) {
+            setQuizData(response.message.content.quiz); // Set only the quiz data part
+            setLoading(false);
+          } else {
+            throw new Error("Invalid quiz data structure");
+          }
         }
       } catch (error) {
         console.error("Error fetching quiz data:", error);
@@ -42,14 +44,14 @@ const QuizPage: React.FC = () => {
     }
 
     const nextQuestionIndex = currentQuestionIndex + 1;
-    if (nextQuestionIndex < (quizData?.quiz?.questions?.length || 0)) {
+    if (nextQuestionIndex < (quizData?.questions?.length || 0)) {
       setCurrentQuestionIndex(nextQuestionIndex);
     } else {
       setCurrentQuestionIndex(-1); // Quiz completed
     }
   };
 
-  const totalQuestions = quizData?.quiz?.questions?.length || 0;
+  const totalQuestions = quizData?.questions?.length || 0;
   const progressPercentage =
     totalQuestions > 0
       ? ((currentQuestionIndex + 1) / totalQuestions) * 100
@@ -70,9 +72,9 @@ const QuizPage: React.FC = () => {
         ) : quizData && currentQuestionIndex !== -1 ? (
           <QuestionCard
             key={currentQuestionIndex}
-            question={quizData.quiz.questions[currentQuestionIndex]?.question}
-            options={quizData.quiz.questions[currentQuestionIndex]?.options}
-            answer={quizData.quiz.questions[currentQuestionIndex]?.answer}
+            question={quizData.questions[currentQuestionIndex]?.question}
+            options={quizData.questions[currentQuestionIndex]?.options}
+            answer={quizData.questions[currentQuestionIndex]?.answer}
             onOptionSelected={handleAnswerSelected}
           />
         ) : (
