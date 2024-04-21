@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Home, Questionnaire } from "./utils/pages";
+import { Home, QuizPage } from "./utils/pages";
 import Layout from "./Layout";
-import ProgressBar from "./components/ProgressBar";
 const App = () => {
   return (
     <Router>
@@ -14,8 +13,7 @@ const App = () => {
             </Layout>
           }
         />
-        <Route path="/bar" element={<ProgressBar />} />
-        <Route path="/questionnaire" element={<Questionnaire />} />
+        <Route path="/questionnaire" element={<QuizPage />} />
       </Routes>
     </Router>
   );

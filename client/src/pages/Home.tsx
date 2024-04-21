@@ -8,6 +8,7 @@ import {
   RxCross2,
 } from "../utils/icons";
 import PersonalInformationPopup from "../components/PersonalInformationPopup";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const [popup, setPopup] = useState(false);
@@ -60,13 +61,13 @@ const Home = () => {
             </div>
           </div>
           <div className="w-full  max-w-[402px] bg-white rounded max-xs:mx-auto max-xs:max-w-[689px]">
-            d
+            <button><Link to="/questionnaire">Questionnaire</Link></button>
           </div>
         </div>
       </div>
       {popup && (
         <div className="w-[100vw] h-[100vh] fixed overflow-y-scroll z-[100] top-0 left-0 bg-transparent flex items-center justify-center">
-          <PersonalInformationPopup onClose={() => setPopup(!popup)} />{" "}
+          <PersonalInformationPopup onClose={() => setPopup(!popup)} onSave={() => {}} />{" "}
         </div>
       )}
     </section>

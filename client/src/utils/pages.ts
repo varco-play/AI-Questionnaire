@@ -1,4 +1,4 @@
 import Home from "../pages/Home";
-import Questionnaire from "../pages/Questionnaire";
+import QuizPage from "../pages/Questionnaire";
 
-export { Home, Questionnaire };
+export { Home, QuizPage };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface PersonalInformation {
   fullName: string;
@@ -9,17 +9,40 @@ interface PersonalInformation {
   subMajor: string;
 }
 
-const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [formData, setFormData] = useState<PersonalInformation>({
-    fullName: '',
-    phoneNumber: '',
-    email: '',
-    placeOfBirth: '',
-    major: '',
-    subMajor: '',
-  });
+interface PersonalInformationPopupProps {
+  onClose: () => void;
+  onSave: (personalInfo: PersonalInformation) => void;
+}
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+const PersonalInformationPopup: React.FC<PersonalInformationPopupProps> = ({
+  onClose,
+  onSave,
+}) => {
+  const initialFormData: PersonalInformation = {
+    fullName: "",
+    phoneNumber: "",
+    email: "",
+    placeOfBirth: "",
+    major: "",
+    subMajor: "",
+  };
+
+  const [formData, setFormData] =
+    useState<PersonalInformation>(initialFormData);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Load saved data from localStorage on component mount
+    const savedData = localStorage.getItem("personalInfo");
+    if (savedData) {
+      const parsedData: PersonalInformation = JSON.parse(savedData);
+      setFormData(parsedData);
+    }
+  }, []);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -32,19 +55,50 @@ const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }
     setFormData((prevData) => ({
       ...prevData,
       major: value,
-      subMajor: '', // Reset subMajor when major changes
+      subMajor: "", // Reset subMajor when major changes
     }));
   };
 
   const handleSave = () => {
-    localStorage.setItem('personalInfo', JSON.stringify(formData));
+    const errors: string[] = [];
+
+    // Check for required fields
+    if (!formData.fullName) {
+      errors.push("Full Name is required");
+    }
+    if (!formData.phoneNumber) {
+      errors.push("Phone Number is required");
+    }
+    if (!formData.email) {
+      errors.push("Email is required");
+    }
+    if (!formData.major) {
+      errors.push("Major is required");
+    }
+    if (!formData.subMajor) {
+      errors.push("Sub-Major is required");
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      return; // Do not proceed with save if there are errors
+    }
+
+    // Clear form errors
+    setFormErrors([]);
+
+    // Save data and close popup
+    onSave(formData);
+    localStorage.setItem("personalInfo", JSON.stringify(formData));
     onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg-white p-8 rounded-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">
+          Personal Information
+        </h2>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Full Name *</label>
           <input
@@ -58,7 +112,9 @@ const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }
         </div>
         <div className="mb-4 flex flex-col md:flex-row md:justify-between">
           <div className="w-full md:w-1/2 md:mr-2">
-            <label className="block text-sm font-medium mb-1">Phone Number *</label>
+            <label className="block text-sm font-medium mb-1">
+              Phone Number *
+            </label>
             <input
               type="text"
               name="phoneNumber"
@@ -80,16 +136,6 @@ const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }
             />
           </div>
         </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Place of Birth</label>
-          <input
-            type="text"
-            name="placeOfBirth"
-            value={formData.placeOfBirth}
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-          />
-        </div>
         <div className="mb-4 flex flex-col md:flex-row md:justify-between">
           <div className="w-full md:w-1/2 md:mr-2">
             <label className="block text-sm font-medium mb-1">Major *</label>
@@ -107,26 +153,44 @@ const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }
             </select>
           </div>
           <div className="w-full md:w-1/2 md:ml-2">
-            <label className="block text-sm font-medium mb-1">{formData.major ? 'Sub-Major' : ''}</label>
+            <label className="block text-sm font-medium mb-1">
+              {formData.major ? "Sub-Major" : ""}
+            </label>
             <select
               name="subMajor"
               value={formData.subMajor}
               onChange={handleInputChange}
               disabled={!formData.major}
+              required
               className="w-full border border-gray-300 rounded px-3 py-2"
             >
               <option value="">Select a Sub-Major</option>
-              {formData.major === 'softwareEngineering' && (
+              {formData.major === "softwareEngineering" && (
                 <>
                   <option value="react">React</option>
                   <option value="angular">Angular</option>
                   <option value="vue">Vue</option>
                 </>
               )}
-              {/* Add more sub-majors based on the selected major */}
+              {formData.major === "dataScience" && (
+                <>
+                  <option value="AI">AI</option>
+                  <option value="SQL">SQL</option>
+                  <option value="Python">Python</option>
+                </>
+              )}
             </select>
           </div>
         </div>
+        {formErrors.length > 0 && (
+          <div className="mb-4">
+            {formErrors.map((error, index) => (
+              <p key={index} className="text-red-500 text-sm">
+                {error}
+              </p>
+            ))}
+          </div>
+        )}
         <div className="flex justify-end">
           <button
             onClick={handleSave}
@@ -134,7 +198,10 @@ const PersonalInformationPopup: React.FC<{ onClose: () => void }> = ({ onClose }
           >
             Save
           </button>
-          <button onClick={onClose} className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+          <button
+            onClick={onClose}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+          >
             Cancel
           </button>
         </div>
